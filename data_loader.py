@@ -1,9 +1,13 @@
+from typing import Iterable
 import pandas as pd
 import torchvision.transforms.functional as F
 from torch.utils.data import Dataset
 import torchvision.transforms as T
 from PIL import Image
 from torchvision.transforms import transforms
+
+IMGNET_MEANS = [0.485, 0.456, 0.406]
+IMGNET_STDS = [0.229, 0.224, 0.225]
 
 
 class WheatDataset(Dataset):
@@ -31,13 +35,7 @@ class WheatDataset(Dataset):
         return image, label
 
 
-def prepare_dataset(dataset_file: str, model_name: str) -> WheatDataset:
-    if "resnet" in model_name:
-        means = [0.485, 0.456, 0.406]
-        stds = [0.229, 0.224, 0.225]
-    else:
-        means = [0, 0, 0]
-        stds = [1, 1, 1]
+def get_transforms(mode: str, means: Iterable, stds: Iterable):
     train_transforms = transforms.Compose(
         [
             transforms.Resize((224, 224)),
@@ -54,10 +52,23 @@ def prepare_dataset(dataset_file: str, model_name: str) -> WheatDataset:
             transforms.Normalize(mean=means, std=stds),
         ]
     )
-    if "train" in dataset_file:
-        tr = train_transforms
+    if mode == "train":
+        return train_transforms
+    return val_transforms
+
+
+def prepare_dataset(dataset_file: str, model_name: str) -> WheatDataset:
+    if "resnet" in model_name:
+        means = IMGNET_MEANS
+        stds = IMGNET_STDS
     else:
-        tr = val_transforms
+        means = [0, 0, 0]
+        stds = [1, 1, 1]
+
+    if "train" in dataset_file:
+        tr = get_transforms("train", means, stds)
+    else:
+        tr = get_transforms("val", means, stds)
     df = pd.read_json(dataset_file)
     dataset = WheatDataset(df, transform=tr)
     return dataset

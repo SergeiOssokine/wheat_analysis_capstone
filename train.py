@@ -52,7 +52,7 @@ def train_model(
 
     model = timm.create_model(
         training_config.model_name,
-        pretrained=True,
+        pretrained=training_config.pretrained,
         num_classes=training_config.n_classes,
     )
     optimizer = optim.Adam(
@@ -174,7 +174,7 @@ def train_model(
         stats = [epoch, train_loss, train_acc, val_loss, val_acc, end_time - start_time]
 
         if epoch % 2 == 0:
-            write_model_checkpoint(model, optimizer, stats, training_config.model_name)
+            write_model_checkpoint(model, optimizer, stats, training_config)
         write_model_training_stats(stats, training_config.model_name)
 
     logger.info("Training completed!")

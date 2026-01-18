@@ -23,6 +23,9 @@ class TrainingConfig(BaseModel):
     model_name: Annotated[
         str, Field(description="Name of the model to load from timm.")
     ]
+    pretrained: Annotated[
+        Optional[bool], Field(description="Use a pretrained model as base", default=True)
+    ]
     num_epochs: Annotated[
         Optional[int], Field(description="Number of epochs to run", default=50)
     ]
@@ -35,7 +38,9 @@ class TrainingConfig(BaseModel):
             description="Optimization configuration", default_factory=OptimizationConfig
         ),
     ]
-    n_classes: Annotated[Optional[int],Field(description="Number of classes in the data",default=8)]
+    n_classes: Annotated[
+        Optional[int], Field(description="Number of classes in the data", default=8)
+    ]
     n_workers: Annotated[
         Optional[int],
         Field(description="Number of workers to use when loading data", default=4),

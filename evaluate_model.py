@@ -1,12 +1,25 @@
 import logging
 
+import cv2
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+from PIL import Image
+from pytorch_grad_cam import GradCAM, ScoreCAM
+from pytorch_grad_cam.utils.image import show_cam_on_image
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from rich.logging import RichHandler
 from torch.utils.data import DataLoader
+from torchvision.transforms import transforms
 
-from data_loader import WheatDataset
+from data_loader import (
+    WheatDataset,
+    get_transforms,
+    prepare_dataset,
+    IMGNET_MEANS,
+    IMGNET_STDS,
+)
 from training_config import TrainingConfig
 
 logger = logging.getLogger(__name__)
@@ -18,7 +31,7 @@ def evaluate_model(
     model,
     dataset: WheatDataset,
     training_config: TrainingConfig,
-    output_file:str|None=None,
+    output_file: str | None = None,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info("Creating data loaders")
@@ -68,9 +81,37 @@ def evaluate_model(
     # Calculate average validation loss and accuracy
     val_loss /= len(val_loader)
     val_acc = val_correct / val_total
-    results = pd.DataFrame({"labels":all_labels, "preds":all_preds})
+    results = pd.DataFrame({"labels": all_labels, "preds": all_preds})
     if output_file:
-       
         logger.info(f"Writing labels and predictions to {output_file}")
         results.to_csv(output_file)
     return results, val_loss, val_acc
+
+
+def get_grad_cam(
+    model, test_image_file, img_transforms,target_layers, device="cuda"
+):
+    image = Image.open(test_image_file)
+
+    tmp = img_transforms(image)
+    input_tensor = tmp.unsqueeze(0).to(device, memory_format=torch.channels_last)
+    with torch.no_grad():
+        predicted_class = model(input_tensor).argmax()
+
+    logger.info(f"The model predicted class {predicted_class}")
+    cam = GradCAM(model=model, target_layers=target_layers)
+    original_image = cv2.imread(test_image_file)
+    original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+
+    # Resize to match model input size
+    rgb_img = cv2.resize(original_image, (224, 224))
+    rgb_img = np.float32(rgb_img) / 255
+
+    # Generate CAM
+    targets = [ClassifierOutputTarget(predicted_class)]  # or None for top prediction
+    grayscale_cam = cam(input_tensor=input_tensor, targets=targets)
+    grayscale_cam = grayscale_cam[0, :]
+    visualization = show_cam_on_image(
+        rgb_img, grayscale_cam, use_rgb=True, colormap=cv2.COLORMAP_MAGMA
+    )
+    return visualization
