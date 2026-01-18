@@ -5,8 +5,16 @@ import yaml
 from training_config import TrainingConfig
 
 
-def write_model_checkpoint(model, epoch: int, name: str) -> None:
-    torch.save(model.state_dict(), f"./{name}_checkpoint_{epoch}.pt")
+def write_model_checkpoint(model, optimizer,stats, name: str) -> None:
+    epoch,train_loss,_,val_loss,_,_ = stats
+    checkpoint = {
+        'model_state_dict':model.state_dict(),
+        'train_loss':train_loss,
+        'val_loss':val_loss,
+        'epoch':epoch,
+        'optimizer_state_dict':optimizer.state_dict()
+    }
+    torch.save(checkpoint, f"./{name}_checkpoint_{epoch}.pt")
 
 
 def write_model_training_stats(stats: list, model_name: str) -> None:

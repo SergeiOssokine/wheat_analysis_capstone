@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Optional
 
 import timm
 import torch
@@ -22,6 +23,7 @@ def train_model(
     train_dataset: WheatDataset,
     val_dataset: WheatDataset,
     training_config: TrainingConfig,
+    checkpoint_file: str | None = None,
     print_freq: int = 100,
 ):
     logger.info(f"Starting to train {training_config.model_name}")
@@ -47,11 +49,25 @@ def train_model(
     logger.info("Done")
 
     logger.info(f"Creating and compiling {training_config.model_name} from timm")
+
     model = timm.create_model(
         training_config.model_name,
         pretrained=True,
         num_classes=training_config.n_classes,
     )
+    optimizer = optim.Adam(
+        model.parameters(),
+        lr=training_config.optimization.learning_rate,
+        weight_decay=training_config.optimization.weight_decay,
+    )
+    start_epoch = 0
+    # Reload the training state if checkpoint file is given
+    if checkpoint_file is not None:
+        checkpoint = torch.load(checkpoint_file, weights_only=True)
+        model = model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer = optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        start_epoch = checkpoint["start_epoch"] + 1
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = torch.compile(model)
     model.to(device, memory_format=torch.channels_last)
@@ -60,11 +76,7 @@ def train_model(
     logger.info("Setting up optimizer")
     criterion = nn.CrossEntropyLoss()
     # Use the Adam optimizer
-    optimizer = optim.Adam(
-        model.parameters(),
-        lr=training_config.optimization.learning_rate,
-        weight_decay=training_config.optimization.weight_decay,
-    )
+
     logger.info("Done")
 
     # Scaler is needed to scale the gradient to avoid underflow, since
@@ -72,7 +84,7 @@ def train_model(
     scaler = torch.amp.GradScaler("cuda")
 
     logger.info("Beginning the training loop")
-    for epoch in range(training_config.num_epochs):
+    for epoch in range(start_epoch, training_config.num_epochs):
         # Training phase
         model.train()  # Set the model to training mode
         running_loss = 0.0
@@ -137,9 +149,10 @@ def train_model(
                     labels.to(device, non_blocking=True),
                 )
                 # Forward pass
-                outputs = model(inputs)
-                # Calculate the loss
-                loss = criterion(outputs, labels)
+                with torch.amp.autocast(device_type="cuda", dtype=torch.float16):
+                    outputs = model(inputs)
+                    # Calculate the loss
+                    loss = criterion(outputs, labels)
 
                 # Accumulate validation loss
                 val_loss += loss.item()
@@ -158,9 +171,10 @@ def train_model(
         logger.info(f"  Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
         end_time = time.time()
         logger.info(f"Time for epoch = {end_time - start_time}")
-        if epoch % 2 == 0:
-            write_model_checkpoint(model, epoch, training_config.model_name)
         stats = [epoch, train_loss, train_acc, val_loss, val_acc, end_time - start_time]
+
+        if epoch % 2 == 0:
+            write_model_checkpoint(model, optimizer, stats, training_config.model_name)
         write_model_training_stats(stats, training_config.model_name)
 
     logger.info("Training completed!")
@@ -176,12 +190,15 @@ def main(
     training_config_file: Annotated[
         str, typer.Option(help="Configuration file for training")
     ],
+    checkpoint_file: Annotated[
+        Optional[str], typer.Option(help="Checkpoint file")
+    ] = None,
 ):
     config = load_config_file(training_config_file)
     train_dataset = prepare_dataset(training_list_file, model_name=config.model_name)
     val_dataset = prepare_dataset(validation_list_file, model_name=config.model_name)
 
-    train_model(train_dataset, val_dataset, config)
+    train_model(train_dataset, val_dataset, config, checkpoint_file=checkpoint_file)
 
 
 if __name__ == "__main__":
