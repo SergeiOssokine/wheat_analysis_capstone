@@ -1,6 +1,5 @@
 from typing import Iterable
 import pandas as pd
-import torchvision.transforms.functional as F
 from torch.utils.data import Dataset
 import torchvision.transforms as T
 from PIL import Image
@@ -24,9 +23,6 @@ class WheatDataset(Dataset):
     def __getitem__(self, idx):
         img_path = self.df.iloc[idx]["img_path"]
         image = Image.open(img_path).convert("RGB")
-        # image = F.to_tensor(image)
-        # image = self.cpu_resize(image)
-
         label = self.df.iloc[idx]["label"]
 
         if self.transform:

@@ -7,19 +7,14 @@ from sklearn.metrics import f1_score, precision_score, recall_score
 import torch
 import torch.nn as nn
 from PIL import Image
-from pytorch_grad_cam import GradCAM, ScoreCAM
+from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from rich.logging import RichHandler
 from torch.utils.data import DataLoader
-from torchvision.transforms import transforms
 
 from data_loader import (
     WheatDataset,
-    get_transforms,
-    prepare_dataset,
-    IMGNET_MEANS,
-    IMGNET_STDS,
 )
 from training_config import TrainingConfig
 
@@ -89,9 +84,7 @@ def evaluate_model(
     return results, val_loss, val_acc
 
 
-def get_grad_cam(
-    model, test_image_file, img_transforms,target_layers, device="cuda"
-):
+def get_grad_cam(model, test_image_file, img_transforms, target_layers, device="cuda"):
     image = Image.open(test_image_file)
 
     tmp = img_transforms(image)
@@ -118,10 +111,12 @@ def get_grad_cam(
     return visualization
 
 
-def compute_accuracy_measures(df_trained,average='micro'):
-    precision = precision_score(df_trained["labels"], df_trained["preds"], average=average)
+def compute_accuracy_measures(df_trained, average="micro"):
+    precision = precision_score(
+        df_trained["labels"], df_trained["preds"], average=average
+    )
     recall = recall_score(df_trained["labels"], df_trained["preds"], average=average)
     f1 = f1_score(df_trained["labels"], df_trained["preds"], average=average)
     print(f"precision: {precision} - recall: {recall} - f1_score: {f1}")
 
-    return [precision,recall,f1]
+    return [precision, recall, f1]

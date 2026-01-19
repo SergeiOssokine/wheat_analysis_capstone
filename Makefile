@@ -4,14 +4,9 @@
 
 IMG_NAME =  grain_prediction_service
 
-get_dataset: ## Download the seed dataset from UCI
-	cd data && bash get_data.sh
 	
 setup_env: ## Set up the local environment by installing the required Python packages
 	bash setup_env.sh
-
-train: ## Train the best model: note do not run this unless you know what your are doing
-	uv run python train.py
 
 build_prediction_service:  ## Build Docker image with the model running as a FastAPI webservice
 	docker build -t ${IMG_NAME}:v0.1 .
@@ -30,6 +25,22 @@ remove_prediction_container: ## Remove the prediction service container
 
 cleanup_venv: ## Remove the Python virtual environment created with setup_env
 	rm -rf ./.venv
+
+# The following ALL take a long time. Run only if you have set up pytorch on GPU and have time!
+train_resnet10:
+	bash train_resnet10_model.sh
+
+train_resnet18:
+	bash train_resnet18_model.sh
+
+train_regnet:
+	bash train_regnet_model.sh
+
+train_mobilenet:
+	bash train_mobilenet_model.sh
+
+train_final_model:
+	bash train_final_model.sh
 
 help:
 	@echo "Possible actions:"
