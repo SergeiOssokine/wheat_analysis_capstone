@@ -84,7 +84,7 @@ make train_resnet10
 ```
 This will produce something like the following:
 
-[]
+![training start](./screenshots/training_start.png)
 
 To save time, we have added checkpoint files with models we have pre-trained in the repository, under `checkpoints`. These checkpoints are explicitly used in the EDA notbeook. To obtain them, you will need to use `git-lfs` to pull the data:
 
