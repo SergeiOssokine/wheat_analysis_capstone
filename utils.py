@@ -32,7 +32,7 @@ def reload_model_for_inference(checkpoint_name: str):
     return model_trained, tr_config
 
 
-def save_model_to_onnx(model, model_name: str):
+def save_model_to_onnx(model, model_name: str, device='cuda'):
     onnx_path = f"{model_name}.onnx"
     dummy_input = torch.randn(1, 3, 224, 224).to(device)
     torch.onnx.export(
