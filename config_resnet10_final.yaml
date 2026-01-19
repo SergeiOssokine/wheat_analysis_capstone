@@ -1,0 +1,2 @@
+model_name: resnet10t
+num_epochs: 14 # This is the **total** number of epochs, including starting from a checkpoint
