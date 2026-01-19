@@ -11,7 +11,7 @@ from data_loader import get_transforms, IMGNET_MEANS, IMGNET_STDS
 import io
 
 # Note that we find the pipeline file!
-onnx_path = "resnet50.onnx"
+onnx_path = "resnet10_final.onnx"
 from fastapi import File, UploadFile, HTTPException
 
 

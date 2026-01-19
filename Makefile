@@ -2,7 +2,7 @@
 # Self-documenting Makefile, taken from
 # https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 
-IMG_NAME =  seeds_classifier
+IMG_NAME =  grain_prediction_service
 
 get_dataset: ## Download the seed dataset from UCI
 	cd data && bash get_data.sh
@@ -17,11 +17,11 @@ build_prediction_service:  ## Build Docker image with the model running as a Fas
 	docker build -t ${IMG_NAME}:v0.1 .
 
 serve_predictions: ## Launch the prediction service container
-	docker run -p 9696:9696 -d --name seeds_classifier ${IMG_NAME}:v0.1
+	docker run -p 9696:9696 -d --name ${IMG_NAME} ${IMG_NAME}:v0.1
 
 test_prediction_service: ## Run an example inference
-	uv run test_prediction_service.py --payload '{"area": 18.96, "perimeter": 16.2, "compactness": 0.9077, "length_kernel": 6.051, "width_kernel": 3.897, "asymmetry_coeff": 4.334, "length_kernel_groove": 5.75}'
-
+	uv run test_prediction_service.py
+	
 shutdown_prediction_service: ## Stop the prediction service docker container
 	docker kill ${IMG_NAME}
 
