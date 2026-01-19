@@ -80,7 +80,7 @@ See the notebook for more details.
 Training deep learning models can take a long time. As such, training all the models is done via scripts that checkpoint and can be resumed.
 For example, to train the `resnet10` model, do
 ```bash
-make train_resnet10
+make train_mobilenet
 ```
 This will produce something like the following:
 
