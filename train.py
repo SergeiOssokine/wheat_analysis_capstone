@@ -55,21 +55,29 @@ def train_model(
         pretrained=training_config.pretrained,
         num_classes=training_config.n_classes,
     )
+    model = torch.compile(model)
     optimizer = optim.Adam(
         model.parameters(),
         lr=training_config.optimization.learning_rate,
         weight_decay=training_config.optimization.weight_decay,
     )
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     start_epoch = 0
     # Reload the training state if checkpoint file is given
     if checkpoint_file is not None:
         checkpoint = torch.load(checkpoint_file, weights_only=True)
-        model = model.load_state_dict(checkpoint["model_state_dict"])
-        optimizer = optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        start_epoch = checkpoint["start_epoch"] + 1
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        # Move optimizer state to the correct device
+        for state in optimizer.state.values():
+            for k, v in state.items():
+                if isinstance(v, torch.Tensor):
+                    state[k] = v.to(device)
+        start_epoch = checkpoint["epoch"] + 1
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = torch.compile(model)
+    
+    
     model.to(device, memory_format=torch.channels_last)
     logger.info("Done")
 

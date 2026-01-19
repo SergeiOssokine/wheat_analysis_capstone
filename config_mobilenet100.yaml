@@ -1,0 +1,2 @@
+model_name: "mobilenetv3_large_100.ra_in1k"
+num_epochs: 12

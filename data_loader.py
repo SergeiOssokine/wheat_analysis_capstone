@@ -58,7 +58,7 @@ def get_transforms(mode: str, means: Iterable, stds: Iterable):
 
 
 def prepare_dataset(dataset_file: str, model_name: str) -> WheatDataset:
-    if "resnet" in model_name:
+    if "resnet" in model_name or "regnet" in model_name or "mobile" in model_name:
         means = IMGNET_MEANS
         stds = IMGNET_STDS
     else:

@@ -3,6 +3,7 @@ import logging
 import cv2
 import numpy as np
 import pandas as pd
+from sklearn.metrics import f1_score, precision_score, recall_score
 import torch
 import torch.nn as nn
 from PIL import Image
@@ -115,3 +116,12 @@ def get_grad_cam(
         rgb_img, grayscale_cam, use_rgb=True, colormap=cv2.COLORMAP_MAGMA
     )
     return visualization
+
+
+def compute_accuracy_measures(df_trained,average='micro'):
+    precision = precision_score(df_trained["labels"], df_trained["preds"], average=average)
+    recall = recall_score(df_trained["labels"], df_trained["preds"], average=average)
+    f1 = f1_score(df_trained["labels"], df_trained["preds"], average=average)
+    print(f"precision: {precision} - recall: {recall} - f1_score: {f1}")
+
+    return [precision,recall,f1]
