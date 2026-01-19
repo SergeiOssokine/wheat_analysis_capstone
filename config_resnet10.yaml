@@ -1,2 +1,2 @@
 model_name: resnet10t
-num_epochs: 50
+num_epochs: 10

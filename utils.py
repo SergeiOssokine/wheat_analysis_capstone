@@ -4,7 +4,6 @@ import timm
 import yaml
 from training_config import TrainingConfig
 
-
 def write_model_checkpoint(model, optimizer,stats, training_config:TrainingConfig) -> None:
     epoch,train_loss,_,val_loss,_,_ = stats
     checkpoint = {
@@ -25,6 +24,22 @@ def reload_model_for_inference(checkpoint_name:str):
     model_trained.load_state_dict(checkpoint["model_state_dict"])
     model_trained.eval()
     return model_trained
+
+def save_model_to_onnx(model,model_name:str):
+    onnx_path = "clothing_classifier_mobilenet_v2.onnx"
+    dummy_input = torch.randn(1, 3, 224, 224).to(device)
+    torch.onnx.export(
+        model,
+        dummy_input,
+        onnx_path,
+        verbose=True,
+        input_names=['input'],
+        output_names=['output'],
+        dynamic_axes={
+            'input': {0: 'batch_size'},
+            'output': {0: 'batch_size'}
+        }
+    )
 
 def write_model_training_stats(stats: list, model_name: str) -> None:
     with open(f"model_training_stats_{model_name}.csv", "a+") as fp:
