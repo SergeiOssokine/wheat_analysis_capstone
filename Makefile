@@ -10,7 +10,7 @@ get_dataset: ## Download the seed dataset from UCI
 setup_env: ## Set up the local environment by installing the required Python packages
 	bash setup_env.sh
 
-train: ## Train the best model (LinearDiscriminantAnalysis)
+train: ## Train the best model: note do not run this unless you know what your are doing
 	uv run python train.py
 
 build_prediction_service:  ## Build Docker image with the model running as a FastAPI webservice
@@ -20,8 +20,8 @@ serve_predictions: ## Launch the prediction service container
 	docker run -p 9696:9696 -d --name ${IMG_NAME} ${IMG_NAME}:v0.1
 
 test_prediction_service: ## Run an example inference
-	uv run test_prediction_service.py
-	
+	uv run python test_prediction_service.py --image-path ./sample_images/7_IM/Grainset_wheat_2021-05-13-10-50-06_22_p600s.png 
+
 shutdown_prediction_service: ## Stop the prediction service docker container
 	docker kill ${IMG_NAME}
 
