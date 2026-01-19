@@ -1,0 +1,2 @@
+#!/bin/bash
+python train.py --training-list-file training_all_list.json --validation-list-file test_list.json --training-config-file config_resnet10_final.yaml --checkpoint-file ./checkpoints/resnet10t_checkpoint_10.pt
